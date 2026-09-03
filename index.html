@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="uk" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Спогади — Галерея Нашої Банди</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f0f13',
+                        cardBg: '#1a1a24',
+                        accent: '#f59e0b',
+                        accentHover: '#d97706',
+                        glassBg: 'rgba(26, 26, 36, 0.75)'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0f0f13;
+            color: #f0f0f5;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(26, 26, 36, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-header {
+            background: rgba(15, 15, 19, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .eq-bar {
+            width: 3px;
+            background-color: #f59e0b;
+            border-radius: 2px;
+            animation: eqBounce 1.2s ease-in-out infinite alternate;
+        }
+        .eq-bar:nth-child(1) { height: 12px; animation-delay: 0.1s; }
+        .eq-bar:nth-child(2) { height: 18px; animation-delay: 0.3s; }
+        .eq-bar:nth-child(3) { height: 8px;  animation-delay: 0.2s; }
+        .eq-bar:nth-child(4) { height: 15px; animation-delay: 0.4s; }
+        .paused-eq .eq-bar {
+            animation-play-state: paused;
+            height: 4px !important;
+        }
+        @keyframes eqBounce {
+            0% { height: 4px; }
+            100% { height: 20px; }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f0f13;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a38;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
+        }
+        .carousel-track {
+            display: flex;
+            width: max-content;
+            animation: scrollCarousel 30s linear infinite;
+        }
+        .carousel-track:hover {
+            animation-play-state: paused;
+        }
+        @keyframes scrollCarousel {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        body.gate-locked {
+            overflow: hidden;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        #lightbox-media-container {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(28px) scale(0.98);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    </style>
+</head>
+<body class="gate-locked">
+
+    <canvas id="particle-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <div id="entry-gate" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-xl transition-all duration-700 p-4">
+        <div class="max-w-md w-full glass rounded-3xl p-8 sm:p-10 text-center border border-amber-500/20 shadow-2xl relative overflow-hidden transform transition-all scale-100">
+            <div class="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="w-20 h-20 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6 text-amber-400 text-3xl shadow-inner">
+                <i class="fa-solid fa-lock-open animate-bounce"></i>
+            </div>
+
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white mb-3 tracking-tight">
+                Ти справді хочеш поглянути на це? 🤫✨
+            </h1>
+            
+            <p class="text-gray-400 text-sm sm:text-base leading-relaxed mb-8">
+                Тут зібрані найбільш дикі, теплі, кумедні та незабутні спогади нашої компанії. Увімкни звук для кращої атмосфери!
+            </p>
+
+            <button id="enter-btn" class="w-full py-4 px-8 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-950 font-bold text-lg rounded-2xl shadow-lg hover:shadow-amber-500/30 transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 group">
+                <span>Звичайно! 🚀</span>
+                <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <header class="fixed top-0 left-0 w-full z-40 glass-header px-4 sm:px-8 py-3 transition-all duration-300">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-lg shadow-md">
+                    <i class="fa-solid fa-camera-retro"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-bold text-white tracking-wide block leading-none">Спогади 📸</span>
+                    <span class="text-xs text-amber-400 font-medium">Архів нашої банди</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 sm:gap-6 bg-slate-900/80 border border-gray-800 rounded-2xl px-3 sm:px-5 py-2 shadow-inner">
+                <div class="hidden md:flex items-center gap-3 pr-2 border-r border-gray-800">
+                    <div id="audio-eq" class="flex items-end gap-1 h-5 paused-eq">
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                    </div>
+                    <div class="text-xs min-w-0">
+                        <div id="track-title" class="font-semibold text-gray-200 tracking-tight line-clamp-1">Скрябін — Старі Фотографії</div>
+                        <div id="audio-status-text" class="text-amber-400/80 text-[10px]">Музика вимкнена</div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button id="previous-track-btn" type="button" aria-label="Попередня пісня" class="w-7 h-7 rounded-lg text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                        </button>
+                        <button id="next-track-btn" type="button" aria-label="Наступна пісня" class="w-7 h-7 rounded-lg text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors">
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="play-pause-btn" class="w-9 h-9 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-950 flex items-center justify-center transition-all shadow-md hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-play text-sm"></i>
+                </button>
+
+                <div class="flex items-center gap-2">
+                    <button id="mute-btn" class="text-gray-400 hover:text-amber-400 text-sm transition-colors">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.6" class="w-16 sm:w-24 accent-amber-500 cursor-pointer h-1.5 rounded-lg bg-gray-800">
+                    <span id="volume-val" class="text-[11px] text-gray-400 font-mono w-7 hidden sm:inline-block">60%</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-8 pt-28 pb-16">
+        <section class="text-center py-8 sm:py-12 mb-6 relative">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+
+            <span class="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold mb-4 tracking-wider uppercase">
+                🔒 Закрита галерея для своїх
+            </span>
+
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-4 leading-tight">
+                Історія у фотографіях <br class="hidden sm:inline">та щирих посмішках
+            </h1>
+
+            <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base mb-8 leading-relaxed">
+                Кожен кадр тут — це незабутня пригода, сміх до сліз та найкращі моменти нашої дружби.
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <button id="random-memory-btn" class="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold text-sm shadow-lg hover:shadow-amber-500/25 transition-all flex items-center gap-2 transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-shuffle"></i>
+                    <span>Випадковий спогад 🎲</span>
+                </button>
+                <button id="slideshow-btn" class="px-6 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:text-gray-950 text-amber-400 font-bold text-sm shadow-lg hover:shadow-amber-500/25 transition-all flex items-center gap-2 transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-play"></i>
+                    <span>Переглянути все 🎬</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto mt-10 p-4 rounded-2xl glass border border-gray-800">
+                <div>
+                    <div id="stat-photos-count" class="text-2xl font-black text-amber-400">0</div>
+                    <div class="text-xs text-gray-400 font-medium">Яскравих моментів</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-black text-amber-400">12+</div>
+                    <div class="text-xs text-gray-400 font-medium">Подорожей</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-black text-amber-400">1000+</div>
+                    <div class="text-xs text-gray-400 font-medium">Смішних моментів</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-black text-amber-400">∞</div>
+                    <div class="text-xs text-gray-400 font-medium">Спогадів попереду</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="w-2.5 h-7 bg-amber-500 rounded-full inline-block"></span>
+                        Наша банда ⚡
+                    </h2>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-1">Головні винуватці всіх цих легендарних історій</p>
+                </div>
+            </div>
+
+            <div class="carousel-wrapper overflow-hidden glass rounded-2xl border border-gray-800 py-6 relative">
+                <div class="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#0f0f13] to-transparent z-10 pointer-events-none"></div>
+                <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0f0f13] to-transparent z-10 pointer-events-none"></div>
+
+                <div id="carousel-track" class="carousel-track">
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <div class="flex items-center justify-between flex-wrap gap-4 mb-8">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                    <span class="w-2.5 h-7 bg-amber-500 rounded-full inline-block"></span>
+                    Спільний архів
+                </h2>
+            </div>
+
+            <div id="events-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </section>
+    </main>
+
+    <div id="lightbox-modal" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-md flex items-center justify-center transition-opacity duration-300">
+        <button id="close-lightbox" class="absolute top-4 right-4 sm:top-6 sm:right-6 w-12 h-12 rounded-2xl glass text-gray-300 hover:text-amber-400 text-xl flex items-center justify-center z-50 transition-all hover:scale-110">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <button id="prev-lightbox" class="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-13 sm:h-13 rounded-2xl glass text-gray-300 hover:text-amber-400 text-lg flex items-center justify-center z-50 transition-all hover:scale-110">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <button id="next-lightbox" class="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-13 sm:h-13 rounded-2xl glass text-gray-300 hover:text-amber-400 text-lg flex items-center justify-center z-50 transition-all hover:scale-110">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <div id="lightbox-dialog" class="w-full h-full flex items-center justify-center p-4">
+            <div id="lightbox-media-container" class="w-full h-full flex items-center justify-center">
+            </div>
+        </div>
+    </div>
+
+    <div id="friend-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass border border-amber-500/30 rounded-3xl max-w-sm w-full p-6 text-center relative shadow-2xl">
+            <button id="close-friend-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img id="friend-modal-avatar" src="" alt="" class="w-24 h-24 rounded-full object-cover border-2 border-amber-500 mx-auto mb-4 shadow-lg">
+            <h3 id="friend-modal-name" class="text-xl font-bold text-white"></h3>
+            <span id="friend-modal-role" class="inline-block text-xs text-amber-400 font-semibold bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 my-2"></span>
+            <p id="friend-modal-bio" class="text-gray-300 text-sm my-4 leading-relaxed"></p>
+            <div class="bg-gray-900/80 rounded-2xl p-3 border border-gray-800 text-xs text-left text-gray-400">
+                <span class="text-amber-400 font-semibold block mb-1">💬 Коронна фраза:</span>
+                <span id="friend-modal-quote" class="italic"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <audio id="bg-audio" loop preload="auto">
+        <source id="audio-source" src="Musik/Скрябін - Старі Фотографії.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const initialEvents = [];
+        let globalIdCounter = 1;
+
+        for (let i = 1; i <= 104; i++) {
+            initialEvents.push({
+                id: globalIdCounter++,
+                date: "Фото " + i,
+                title: "Спогад " + i,
+                type: "image",
+                media: "Photos/" + i + ".jpg"
+            });
+        }
+
+        const videoFiles = [
+            "1.mp4", "2.mp4", "3.mp4", "4.MOV", "5.MOV", "6.MOV", 
+            "7.MOV", "8.MOV", "9.MOV", "10.MOV", "11.MOV"
+        ];
+
+        for (let i = 0; i < videoFiles.length; i++) {
+            initialEvents.push({
+                id: globalIdCounter++,
+                date: "Відео " + (i + 1),
+                title: "Відео " + (i + 1),
+                type: "video",
+                media: "Video/" + videoFiles[i]
+            });
+        }
+
+        const friendsData = [
+            {
+                id: 1,
+                name: "Аня Курилюк",
+                role: "Майстер Селфі",
+                avatar: "User/AnnaK.png",
+                bio: "🎉Birthday - 26.06.2008",
+                quote: "Картішкі?"
+            },
+            {
+                id: 2,
+                name: "Дарина Дулепова",
+                role: "Організатор Хаосу",
+                avatar: "User/DARINA.png",
+                bio: "🎉Birthday - 29.06.2007",
+                quote: "Сьогодні будем пити чай?"
+            },
+            {
+                id: 3,
+                name: "Діма Халанич",
+                role: "Душа Компанії",
+                avatar: "User/Dimasikk.png",
+                bio: "🎉Birthday - 24.10.2005",
+                quote: "Тутка тамка"
+            },
+            {
+                id: 4,
+                name: "Максім Кубик",
+                role: "Супер DJ",
+                avatar: "User/MAKSIM.png",
+                bio: "🎉Birthday - 07.02.2007",
+                quote: "Пусто"
+            },
+            {
+                id: 5,
+                name: "Паша Чешук",
+                role: "Тіхоня",
+                avatar: "User/PASHA.png",
+                bio: "🎉Birthday - 06.07.2008",
+                quote: "Пусто"
+            },
+            {
+                id: 6,
+                name: "Віка Булейко",
+                role: "Відеооператор",
+                avatar: "User/VikaB.png",
+                bio: "🎉Birthday - 05.08.2008",
+                quote: "Давай"
+            },
+            {
+                id: 7,
+                name: "Віка Венгер",
+                role: "Фотограф",
+                avatar: "User/VikaV.png",
+                bio: "🎉Birthday - 04.06.2006",
+                quote: "Пусто"
+            }
+        ];
+
+        let events = [...initialEvents];
+        let currentLightboxIndex = -1;
+        let slideshowTimer = null;
+        let isSlideshowActive = false;
+
+        const bgAudio = document.getElementById('bg-audio');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeVal = document.getElementById('volume-val');
+        const muteBtn = document.getElementById('mute-btn');
+        const audioEq = document.getElementById('audio-eq');
+        const audioStatusText = document.getElementById('audio-status-text');
+        const trackTitle = document.getElementById('track-title');
+        const audioSource = document.getElementById('audio-source');
+        const previousTrackBtn = document.getElementById('previous-track-btn');
+        const nextTrackBtn = document.getElementById('next-track-btn');
+
+        const tracks = [
+            { title: 'Скрябін — Старі Фотографії', source: 'Musik/Скрябін - Старі Фотографії.mp3' },
+            { title: 'Цвіт Кульбаби — По барабану', source: 'Musik/Цвіт Кульбаби - По барабану.mp3' }
+        ];
+        let currentTrackIndex = 0;
+
+        let audioContext = null;
+        let synthInterval = null;
+        let isUsingSynthFallback = false;
+
+        function startSynthFallback() {
+            if (synthInterval || isAudioPlaying()) return;
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                isUsingSynthFallback = true;
+                
+                const chords = [
+                    [261.63, 329.63, 392.00, 493.88],
+                    [220.00, 261.63, 329.63, 392.00],
+                    [174.61, 220.00, 261.63, 329.63],
+                    [196.00, 246.94, 293.66, 392.00]
+                ];
+                let chordIndex = 0;
+
+                function playChord() {
+                    if (!isUsingSynthFallback) return;
+                    const chord = chords[chordIndex];
+                    chordIndex = (chordIndex + 1) % chords.length;
+
+                    chord.forEach((freq, i) => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.08);
+
+                        const targetVol = parseFloat(volumeSlider.value) * 0.15;
+                        gain.gain.setValueAtTime(0.001, audioContext.currentTime + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(targetVol, audioContext.currentTime + i * 0.08 + 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + i * 0.08 + 2.5);
+
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+
+                        osc.start(audioContext.currentTime + i * 0.08);
+                        osc.stop(audioContext.currentTime + i * 0.08 + 2.6);
+                    });
+                }
+
+                playChord();
+                synthInterval = setInterval(playChord, 3000);
+                updateAudioUI(true, "Синтезована ностальгія 🎹");
+            } catch (e) {}
+        }
+
+        function stopSynthFallback() {
+            if (synthInterval) {
+                clearInterval(synthInterval);
+                synthInterval = null;
+            }
+            isUsingSynthFallback = false;
+        }
+
+        function isAudioPlaying() {
+            return !bgAudio.paused || isUsingSynthFallback;
+        }
+
+        function selectTrack(index) {
+            const wasPlaying = isAudioPlaying();
+            stopSynthFallback();
+            currentTrackIndex = (index + tracks.length) % tracks.length;
+            const track = tracks[currentTrackIndex];
+
+            audioSource.src = track.source;
+            bgAudio.load();
+            trackTitle.textContent = track.title;
+
+            if (wasPlaying) {
+                bgAudio.volume = parseFloat(volumeSlider.value);
+                bgAudio.play().then(() => {
+                    updateAudioUI(true, track.title);
+                }).catch(() => {
+                    startSynthFallback();
+                });
+            } else {
+                updateAudioUI(false);
+            }
+        }
+
+        function updateAudioUI(isPlaying, customText) {
+            if (isPlaying) {
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause text-sm"></i>';
+                audioEq.classList.remove('paused-eq');
+                audioStatusText.textContent = customText || "Відтворюється 🎵";
+                audioStatusText.classList.add('text-amber-400');
+            } else {
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-play text-sm"></i>';
+                audioEq.classList.add('paused-eq');
+                audioStatusText.textContent = "Музика вимкнена";
+                audioStatusText.classList.remove('text-amber-400');
+            }
+        }
+
+        function triggerConfetti() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#f59e0b', '#fbbf24', '#ffffff', '#e11d48', '#3b82f6'];
+
+            for (let i = 0; i < 90; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: (Math.random() - 0.7) * 14,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 100,
+                    rotation: Math.random() * 360
+                });
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                particles.forEach(p => {
+                    if (p.life > 0) {
+                        alive = true;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.25;
+                        p.life -= 1.5;
+
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate((p.rotation * Math.PI) / 180);
+                        ctx.fillStyle = p.color;
+                        ctx.globalAlpha = p.life / 100;
+                        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                        ctx.restore();
+                    }
+                });
+
+                if (alive) requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+        }
+
+        document.getElementById('enter-btn').addEventListener('click', () => {
+            const gate = document.getElementById('entry-gate');
+            document.body.classList.remove('gate-locked');
+            
+            gate.classList.add('opacity-0', 'pointer-events-none', 'scale-105');
+            setTimeout(() => gate.remove(), 700);
+
+            triggerConfetti();
+
+            bgAudio.volume = parseFloat(volumeSlider.value);
+            bgAudio.play().then(() => {
+                updateAudioUI(true, tracks[currentTrackIndex].title);
+            }).catch(() => {
+                startSynthFallback();
+            });
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            if (isAudioPlaying()) {
+                bgAudio.pause();
+                stopSynthFallback();
+                updateAudioUI(false);
+            } else {
+                bgAudio.play().then(() => {
+                    stopSynthFallback();
+                    updateAudioUI(true, tracks[currentTrackIndex].title);
+                }).catch(() => {
+                    startSynthFallback();
+                });
+            }
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            bgAudio.volume = val;
+            volumeVal.textContent = `${Math.round(val * 100)}%`;
+            if (val === 0) {
+                muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-amber-500"></i>';
+            } else {
+                muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }
+        });
+
+        muteBtn.addEventListener('click', () => {
+            if (bgAudio.volume > 0) {
+                bgAudio.volume = 0;
+                volumeSlider.value = 0;
+                volumeVal.textContent = '0%';
+                muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-amber-500"></i>';
+            } else {
+                bgAudio.volume = 0.6;
+                volumeSlider.value = 0.6;
+                volumeVal.textContent = '60%';
+                muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }
+        });
+
+        previousTrackBtn.addEventListener('click', () => {
+            selectTrack(currentTrackIndex - 1);
+        });
+
+        nextTrackBtn.addEventListener('click', () => {
+            selectTrack(currentTrackIndex + 1);
+        });
+
+        function stopActiveVideo() {
+            const container = document.getElementById('lightbox-media-container');
+            if (container) {
+                const video = container.querySelector('video');
+                if (video) {
+                    video.pause();
+                    video.removeAttribute('src');
+                    video.load();
+                }
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('events-grid');
+            document.getElementById('stat-photos-count').textContent = events.length;
+
+            if (events.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-gray-500">
+                        <i class="fa-regular fa-folder-open text-4xl mb-3 block"></i>
+                        Галерея порожня.
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = events.map((item, index) => {
+                return `
+                    <div class="event-card reveal-on-scroll glass border border-gray-800 rounded-3xl overflow-hidden hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1.5 shadow-xl group flex flex-col justify-between" style="transition-delay: ${Math.min(index % 3, 2) * 90}ms" data-id="${item.id}">
+                        <div class="relative overflow-hidden cursor-pointer h-64 bg-black" onclick="openLightboxById(${item.id})">
+                            ${item.type === 'video' 
+                                ? `<video class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" preload="metadata">
+                                       <source src="${item.media}">
+                                   </video>
+                                   <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                       <div class="w-12 h-12 rounded-full bg-amber-500/90 text-gray-950 flex items-center justify-center text-lg shadow-lg">
+                                           <i class="fa-solid fa-play ml-1"></i>
+                                       </div>
+                                   </div>`
+                                : `<img src="${item.media}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">`
+                            }
+                            <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-amber-400 border border-amber-500/20">
+                                ${item.date}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            observeRevealCards();
+        }
+
+        function observeRevealCards() {
+            const cards = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)');
+            const observer = new IntersectionObserver((entries, currentObserver) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add('is-visible');
+                    currentObserver.unobserve(entry.target);
+                });
+            }, { threshold: 0.12 });
+
+            cards.forEach(card => observer.observe(card));
+        }
+
+        function renderFriendsCarousel() {
+            const track = document.getElementById('carousel-track');
+            const items = friendsData.map(f => `
+                <div onclick="openFriendModal(${f.id})" class="friend-card flex-shrink-0 w-44 glass border border-gray-800 rounded-2xl p-4 text-center cursor-pointer hover:border-amber-500/50 hover:scale-105 transition-all group">
+                    <img src="${f.avatar}" alt="${f.name}" class="w-16 h-16 rounded-full object-cover mx-auto mb-3 border-2 border-amber-500/60 group-hover:border-amber-400 shadow-md">
+                    <h4 class="text-sm font-bold text-white group-hover:text-amber-400 line-clamp-1">${f.name}</h4>
+                    <span class="text-[10px] text-amber-400/90 bg-amber-500/10 px-2 py-0.5 rounded-full inline-block mt-1 font-medium line-clamp-1 border border-amber-500/20">${f.role}</span>
+                </div>
+            `).join('');
+
+            track.innerHTML = `
+                <div class="flex gap-6 pr-6">${items}</div>
+                <div class="flex gap-6 pr-6">${items}</div>
+            `;
+        }
+
+        window.openFriendModal = function(id) {
+            const friend = friendsData.find(f => f.id === id);
+            if (!friend) return;
+
+            document.getElementById('friend-modal-avatar').src = friend.avatar;
+            document.getElementById('friend-modal-name').textContent = friend.name;
+            document.getElementById('friend-modal-role').textContent = friend.role;
+            document.getElementById('friend-modal-bio').textContent = friend.bio;
+            document.getElementById('friend-modal-quote').textContent = `"${friend.quote}"`;
+
+            document.getElementById('friend-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('close-friend-modal').addEventListener('click', () => {
+            document.getElementById('friend-modal').classList.add('hidden');
+        });
+
+        window.openLightboxById = function(id) {
+            stopSlideshow();
+            const index = events.findIndex(e => e.id === id);
+            if (index !== -1) {
+                currentLightboxIndex = index;
+                renderLightboxContent();
+                document.getElementById('lightbox-modal').classList.remove('hidden');
+            }
+        };
+
+        function updateMediaHTML(item, mediaContainer) {
+            stopActiveVideo();
+            if (item.type === 'video') {
+                mediaContainer.innerHTML = `<video id="active-lightbox-video" controls autoplay playsinline class="max-h-[92vh] max-w-[92vw] object-contain rounded-2xl shadow-2xl">
+                    <source src="${item.media}">
+                </video>`;
+                if (!bgAudio.paused) bgAudio.volume = 0.1;
+            } else {
+                mediaContainer.innerHTML = `<img src="${item.media}" alt="${item.title}" class="max-h-[92vh] max-w-[92vw] object-contain rounded-2xl shadow-2xl">`;
+                if (!bgAudio.paused) bgAudio.volume = parseFloat(volumeSlider.value);
+            }
+        }
+
+        function renderLightboxContent(animate = false) {
+            const item = events[currentLightboxIndex];
+            if (!item) return;
+
+            const mediaContainer = document.getElementById('lightbox-media-container');
+            
+            if (animate) {
+                mediaContainer.style.opacity = '0';
+                setTimeout(() => {
+                    updateMediaHTML(item, mediaContainer);
+                    mediaContainer.style.opacity = '1';
+                    setupSlideshowTimer();
+                }, 200);
+            } else {
+                updateMediaHTML(item, mediaContainer);
+                mediaContainer.style.opacity = '1';
+                setupSlideshowTimer();
+            }
+        }
+
+        function setupSlideshowTimer() {
+            if (!isSlideshowActive) return;
+
+            if (slideshowTimer) clearTimeout(slideshowTimer);
+
+            const item = events[currentLightboxIndex];
+            if (item.type === 'video') {
+                const videoElem = document.getElementById('active-lightbox-video');
+                if (videoElem) {
+                    videoElem.onended = () => {
+                        if (isSlideshowActive) nextSlide();
+                    };
+                    slideshowTimer = setTimeout(() => {
+                        if (isSlideshowActive) nextSlide();
+                    }, 60000);
+                } else {
+                    slideshowTimer = setTimeout(nextSlide, 3000);
+                }
+            } else {
+                slideshowTimer = setTimeout(nextSlide, 3000);
+            }
+        }
+
+        function startSlideshow() {
+            isSlideshowActive = true;
+            currentLightboxIndex = 0;
+            document.getElementById('lightbox-modal').classList.remove('hidden');
+            renderLightboxContent(true);
+            showToast("🎬 Автоматичний перегляд розпочато!");
+        }
+
+        function stopSlideshow() {
+            isSlideshowActive = false;
+            if (slideshowTimer) {
+                clearTimeout(slideshowTimer);
+                slideshowTimer = null;
+            }
+        }
+
+        function nextSlide() {
+            if (!isSlideshowActive) return;
+            currentLightboxIndex = (currentLightboxIndex + 1) % events.length;
+            renderLightboxContent(true);
+        }
+
+        document.getElementById('slideshow-btn').addEventListener('click', () => {
+            startSlideshow();
+        });
+
+        document.getElementById('prev-lightbox').addEventListener('click', () => {
+            if (events.length === 0) return;
+            currentLightboxIndex = (currentLightboxIndex - 1 + events.length) % events.length;
+            renderLightboxContent(true);
+        });
+
+        document.getElementById('next-lightbox').addEventListener('click', () => {
+            if (events.length === 0) return;
+            currentLightboxIndex = (currentLightboxIndex + 1) % events.length;
+            renderLightboxContent(true);
+        });
+
+        document.getElementById('close-lightbox').addEventListener('click', () => {
+            closeLightbox();
+        });
+
+        function closeLightbox() {
+            stopSlideshow();
+            stopActiveVideo();
+            const mediaContainer = document.getElementById('lightbox-media-container');
+            if (mediaContainer) mediaContainer.innerHTML = '';
+            document.getElementById('lightbox-modal').classList.add('hidden');
+            currentLightboxIndex = -1;
+            if (!bgAudio.paused) bgAudio.volume = parseFloat(volumeSlider.value);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('lightbox-modal').classList.contains('hidden')) return;
+            if (e.key === 'ArrowLeft') document.getElementById('prev-lightbox').click();
+            if (e.key === 'ArrowRight') document.getElementById('next-lightbox').click();
+            if (e.key === 'Escape') closeLightbox();
+        });
+
+        document.getElementById('random-memory-btn').addEventListener('click', () => {
+            if (events.length === 0) return;
+            stopSlideshow();
+            const randomIndex = Math.floor(Math.random() * events.length);
+            openLightboxById(events[randomIndex].id);
+            triggerConfetti();
+            showToast("🎲 Випадковий спогад обрано!");
+        });
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'glass border border-amber-500/40 text-amber-400 px-4 py-3 rounded-2xl text-xs font-semibold shadow-2xl transition-all duration-300 transform translate-y-4 opacity-0 flex items-center gap-2';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGrid();
+            renderFriendsCarousel();
+        });
+    </script>
+</body>
+</html>
